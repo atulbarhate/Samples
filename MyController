@@ -1,0 +1,20 @@
+@RestController
+@RequestMapping("/api")
+public class MyController {
+
+    @PostMapping("/submit")
+    public ResponseEntity<String> submitData(@RequestBody @Valid UserInput input) {
+        // Process input after validation
+        return ResponseEntity.ok("Input received successfully!");
+    }
+}
+
+@Data
+class UserInput {
+    @NotBlank
+    @Size(max = 100)
+    private String username;
+
+    @Pattern(regexp = "^[a-zA-Z0-9]*$", message = "Input contains invalid characters")
+    private String comment;
+}
