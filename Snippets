@@ -1,0 +1,101 @@
+3. Sanitizing Input
+Use libraries like OWASP Java HTML Sanitizer to sanitize input fields.
+
+import org.owasp.html.PolicyFactory;
+import org.owasp.html.Sanitizers;
+
+PolicyFactory policy = Sanitizers.FORMATTING.and(Sanitizers.LINKS);
+String safeInput = policy.sanitize(userInput);
+
+
+
+4. Content Security Policy (CSP)
+Set up a Content Security Policy in HTTP response headers to restrict the sources from which scripts can be executed.
+
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .headers()
+            .contentSecurityPolicy("script-src 'self'");
+    }
+}
+
+
+5. Validating Map in Spring Boot
+If you’re accepting a Map object as input and need to validate its contents, use custom validation logic or constraints.
+
+
+@RestController
+@RequestMapping("/api")
+public class MapValidationController {
+
+    @PostMapping("/validateMap")
+    public ResponseEntity<String> validateMap(@RequestBody @Valid InputMap inputMap) {
+        // Processing after validation
+        return ResponseEntity.ok("Map validated successfully!");
+    }
+}
+
+@Data
+class InputMap {
+    @NotEmpty(message = "Data map cannot be empty")
+    @Valid
+    private Map<@NotBlank String, @NotBlank String> data;
+}
+
+Advanced Validation for Map
+If the validation rules are more complex, consider writing a custom validator:
+
+import javax.validation.Constraint;
+import javax.validation.Payload;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Constraint(validatedBy = MapValidator.class)
+@Target({ ElementType.FIELD })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ValidMap {
+    String message() default "Invalid map content";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+import java.util.Map;
+
+public class MapValidator implements ConstraintValidator<ValidMap, Map<String, String>> {
+
+    @Override
+    public boolean isValid(Map<String, String> map, ConstraintValidatorContext context) {
+        if (map == null || map.isEmpty()) {
+            return false;
+        }
+
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            if (entry.getKey() == null || entry.getValue() == null 
+                || entry.getKey().length() > 50 
+                || entry.getValue().length() > 50) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+@Data
+class InputMap {
+    @ValidMap
+    private Map<String, String> data;
+}
+
+
+
